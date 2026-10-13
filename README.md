@@ -6,21 +6,25 @@ This document is for collaborators. It covers where data lives, what each file/f
 
 ## Storage locations
 
-| Location | Purpose |
-|---|---|
-| **Box** — `Project_Biosignals_study_2/3_Data/` | All raw and processed data (shared server) |
-| **GitHub** — `Biosignals-2/` | Analysis code, config, protocols and QC reports (no data) |
+
+| Location                                       | Purpose                                                   |
+| ---------------------------------------------- | --------------------------------------------------------- |
+| **Box** — `Project_Biosignals_study_2/3_Data/` | All raw and processed data (shared server)                |
+| **GitHub** — `Biosignals-2/`                   | Analysis code, config, protocols and QC reports (no data) |
+
 
 Box is not included in the GitHub repo. Code references Box paths via `config.py` (see below).
 
 ---
 
-## Quality-check reports
+## Quality-check reports.
 
-| Report | Covers | Regenerate with |
-|---|---|---|
-| [Main-study QC dashboard](https://cmdaoust.github.io/Biosignals-2/analysis/biosignals2_qc.html) | Main-study participants | `analysis/generate_qc_report.R` |
-| [Pilot QC report](https://cmdaoust.github.io/Biosignals-2/analysis/biosignals2_qc_pilot.html) | Pilot participants only | `analysis/generate_qc_report_pilot.R` |
+
+| Report                                                                                          | Covers                  | Regenerate with                       |
+| ----------------------------------------------------------------------------------------------- | ----------------------- | ------------------------------------- |
+| [Main-study QC dashboard](https://cmdaoust.github.io/Biosignals-2/analysis/biosignals2_qc.html) | Main-study participants | `analysis/generate_qc_report.R`       |
+| [Pilot QC report](https://cmdaoust.github.io/Biosignals-2/analysis/biosignals2_qc_pilot.html)   | Pilot participants only | `analysis/generate_qc_report_pilot.R` |
+
 
 Each report checks PsychoPy self-report, Ledalab (EDA), Kubios (HRV), webcam biometrics, video,
 FaceReader and questionnaires. Sections for data that isn't available yet are left out rather than failing.
@@ -35,6 +39,8 @@ After regenerating a report, push the new `.html` (Pages takes a minute or two t
 **Session protocol checklist:** [biosignals2-protocol-checklist.html](https://cmdaoust.github.io/Biosignals-2/protocol_instructions/biosignals2-protocol-checklist.html)
 
 ---
+
+
 
 ## Box — Data server
 
@@ -75,11 +81,14 @@ Root: `C:\Users\...\Box\Project_Biosignals_study_2\3_Data\`
 ├── clean_combined_data/                # Cleaned/processed data files with all participat data in one file 
 ```
 
+
+
 ### Kubios files
 
 Kubios HRV Scientific 4.3 was run on the BIOPAC ECG recordings. Output is one wide-format CSV per participant.
 
 `{pid}_physiology_hrv.csv` covers 5 experimental blocks (baseline, negative induction, negative recovery, positive induction, positive recovery). The file contains:
+
 - Lines 1–60: Kubios analysis parameters and settings
 - Lines 62–151: Summary HRV statistics per block (RMSSD, SDNN, mean HR, LF/HF power, etc.)
 - Lines 207+: Per-beat RR interval data and spectral estimates (FFT and AR), one set of columns per block
@@ -87,6 +96,8 @@ Kubios HRV Scientific 4.3 was run on the BIOPAC ECG recordings. Output is one wi
 Two tidy extracts are also saved in `kubios/`: `{pid}_kubios_summary.csv` (one row per block) and `{pid}_kubios_rr.csv` (per-beat RR intervals). These are what `03_hr_comparison_pilot.Rmd` reads directly.
 
 ---
+
+
 
 ## GitHub — Code repository
 
@@ -179,11 +190,14 @@ Biosignals-2/
 
 ---
 
+
+
 ## EDA (skin conductance) analysis
 
 EDA is analysed using **Ledalab** (MATLAB toolbox, continuous decomposition analysis / CDA method).
 
 **Pipeline:**
+
 1. `analysis/ledalab/01_create_ledalab_events_biopac.py` — reads BIOPAC .acq files directly and writes Ledalab event files (BIOPAC-derived timing). Channel names correctly reflect condition polarity (P=positive, N=negative); see script header for verified mapping.
 2. `analysis/ledalab/02_create_ledalab_events_psychopy.py` — reads PsychoPy CSVs + BIOPAC (for clock alignment) and writes Ledalab event files (PsychoPy-derived timing; just for reference, not to be used in futher analyses).
 3. `analysis/ledalab/03_compare_ledalab_events.py` — compares BIOPAC vs PsychoPy onset times; use to verify the BIOPAC channel mapping is correct before running Ledalab.
@@ -193,6 +207,7 @@ EDA is analysed using **Ledalab** (MATLAB toolbox, continuous decomposition anal
 Scripts 1–2 write to `event_onsets/blocks/`
 
 **Ledalab output files** (in Box `ledalab/`):
+
 - `{pid}_eda_era.txt` — event-related EDA: one row per epoch, columns include nSCR, latency, amplitude sum, phasic max, tonic, ISCR (CDA and TTP decompositions)
 - `{pid}_eda_scrlist.txt` — list of individual SCR events: onset (s) and amplitude (µS)
 
@@ -200,24 +215,31 @@ Scripts 1–2 write to `event_onsets/blocks/`
 
 ---
 
+
+
 ## `03_hr_comparison_pilot.Rmd` — Pilot HR/HRV comparison
 
 This script compares heart rate and HRV across three sources for pilot participant:
 
-| Source | Signal | Key data file |
-|---|---|---|
-| **ECG (Kubios)** | Gold standard — BIOPAC ECG, Kubios HRV | `{pid}_kubios_summary.csv` + `_rr.csv` |
-| **FaceReader** | Facial video HR (Noldus FaceReader) | `..._heart beat log.txt` |
-| **Webcam Biometrics** | rPPG from internal webcam (PsychoPy plugin) | `..._biometrics.csv` |
+
+| Source                | Signal                                      | Key data file                          |
+| --------------------- | ------------------------------------------- | -------------------------------------- |
+| **ECG (Kubios)**      | Gold standard — BIOPAC ECG, Kubios HRV      | `{pid}_kubios_summary.csv` + `_rr.csv` |
+| **FaceReader**        | Facial video HR (Noldus FaceReader)         | `..._heart beat log.txt`               |
+| **Webcam Biometrics** | rPPG from internal webcam (PsychoPy plugin) | `..._biometrics.csv`                   |
+
 
 Metrics compared per block: mean HR, SDNN, RMSSD, LF/HF power.
 
 **Notes:**
+
 - FaceReader data is used as output with no additional filtering.
 - Webcam biometrics IBI artifact rejection uses `bpm_fft` (FFT-based HR) as the reference, not the peak-detected median. This is because the rPPG peak detector fires ~30% too often, making the peak-based median unreliable.
 - Time alignment for webcam data: `t_video_s = video_time / 1000 - mono_reset`.
 
 ---
+
+
 
 ## Experiment
 
@@ -235,6 +257,7 @@ experiment/
 ```
 
 **To run the experiment:**
+
 1. Open `Biosignals2_Psychopy.psyexp` in PsychoPy Builder.
 2. Press Run (green play button) or export to Python and run directly.
 
@@ -242,9 +265,12 @@ experiment/
 
 ---
 
+
+
 ## Setup for a new machine
 
 1. Install [Box Drive](https://www.box.com/resources/downloads) and sync `Project_Biosignals_study_2`.
 2. Clone this repo.
 3. At the repo root, copy each template and fill in your paths: `config_template.py` → `config.py` (Python), `config_template.R` → `config.R` (R) and `config_template.m` → `config.m` (MATLAB). There is **one** config per language, at the repo root; every script finds it there. Don't put copies in `analysis/` or its subfolders.
 4. R analysis: open any `.Rmd` in `analysis/` in RStudio. Each script sources `config.R` automatically via `here::here("config.R")`.
+
